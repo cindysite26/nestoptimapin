@@ -1,42 +1,42 @@
 import os
-import time
-import urllib.parse
 import requests
+import urllib.parse
 
-# පින්තූර save කිරීමට 'images' නමින් ෆෝල්ඩරයක් සාදයි
-os.makedirs("images", exist_ok=True)
+def main():
+    # prompts.txt ගොනුව කියවීම
+    if not os.path.exists("prompts.txt"):
+        print("prompts.txt ගොනුව සොයාගත නොහැක!")
+        return
 
-print("Image generation started...")
+    with open("prompts.txt", "r", encoding="utf-8") as file:
+        prompts = [line.strip() for line in file if line.strip()]
 
-for i in range(1, 51):
-    try:
-        # ඔබට අවශ්‍ය Prompt එක මෙහි ලබා දෙන්න
-        # පින්තූර 50ම එක සමාන නොවීම සඳහා 'variation {i}' යන්න එකතු කර ඇත
-        prompt = f"A beautiful futuristic city landscape, cinematic lighting, highly detailed, 8k, variation {i}"
+    print(f"Prompts {len(prompts)} ක් හමු විය. Images සැදීම ආරම්භ කරමි...")
+
+    # පින්තූර සුරැකීමට images නමින් folder එකක් සෑදීම
+    os.makedirs("images", exist_ok=True)
+
+    for i, prompt in enumerate(prompts, start=1):
+        print(f"Generating image {i}...")
         
-        # URL එකට ගැලපෙන ලෙස Prompt එක සකස් කිරීම
+        # URL එකට ගැලපෙන ලෙස prompt එක සැකසීම
         encoded_prompt = urllib.parse.quote(prompt)
         
-        # Pollinations AI URL (nologo=true මගින් watermark ඉවත් කරයි)
-        url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?nologo=true"
-
-        # Image එක ලබා ගැනීම
-        response = requests.get(url)
+        # Pollinations AI URL (API key අවශ්‍ය නොවේ)
+        url = f"https://image.pollinations.ai/prompt/{encoded_prompt}"
         
-        if response.status_code == 200:
-            # පින්තූරය 'images' ෆෝල්ඩරය තුළ save කිරීම
-            with open(f"images/image_{i}.jpg", 'wb') as f:
-                f.write(response.content)
-            print(f"[{i}/50] Image {i} සාර්ථකව generate විය.")
-        else:
-            print(f"[{i}/50] Image {i} ලබාගැනීමට නොහැකි විය. Error Code: {response.status_code}")
-            
-        # ඊළඟ රූපය ලබාගැනීමට පෙර තත්පර 60ක් (විනාඩියක්) රැඳී සිටීම
-        # අවසාන පින්තූරයට (50 වෙනි) පසුව රැඳී සිටීම අවශ්‍ය නොවේ
-        if i < 50:
-            time.sleep(60)
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                # post(1).webp, post(2).webp ලෙස නම ලබා දී save කිරීම
+                file_name = f"images/post({i}).webp"
+                with open(file_name, 'wb') as img_file:
+                    img_file.write(response.content)
+                print(f"✅ {file_name} සාර්ථකව save කරන ලදී.")
+            else:
+                print(f"❌ Image {i} සෑදීමේදී දෝෂයක්: {response.status_code}")
+        except Exception as e:
+            print(f"❌ Error: {e}")
 
-    except Exception as e:
-        print(f"Error at image {i}: {e}")
-
-print("සම්පූර්ණ ක්‍රියාවලිය සාර්ථකව අවසන්!")
+if __name__ == "__main__":
+    main()
